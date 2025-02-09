@@ -5,10 +5,11 @@ import { OpenAIStream, StreamingTextResponse } from 'ai'
 // Explicitly set runtime
 export const runtime = 'edge'
 
-const config = new Configuration({
-  apiKey: process.env.OPENAI_API_KEY
+const configuration = new Configuration({
+  apiKey: process.env.OPENAI_API_KEY,
 })
-const openai = new OpenAIApi(config)
+
+const openai = new OpenAIApi(configuration)
 
 const systemPrompts = {
   "few-shot": `You are an expert interviewer. Your task is to provide interview practice based on the given topic. Here are a few examples:
@@ -79,6 +80,13 @@ export async function POST(req: Request) {
       temperature: 0.7,
       stream: true,
     })
+
+    // Create a stream from the response
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error('OpenAI API error:', errorText)
+      return new Response(errorText, { status: response.status })
+    }
 
     const stream = OpenAIStream(response)
     return new StreamingTextResponse(stream)

@@ -16,10 +16,20 @@ export default function InterviewPractice() {
   const [techniqueDescription, setTechniqueDescription] = useState("")
   const [apiKeySet, setApiKeySet] = useState(true)
 
-  const { messages, handleSubmit, isLoading } = useChat({
+  const { messages, handleSubmit, isLoading, error } = useChat({
     api: '/api/interview',
+    onResponse: (response) => {
+      console.log('Response received:', response)
+    },
+    onFinish: (message) => {
+      console.log('Chat finished:', message)
+    },
+    onError: (error) => {
+      console.error('Chat error:', error)
+    }
   })
 
+  console.log({error});
 
   const getTechniqueDescription = (technique: string): string => {
     switch (technique) {
