@@ -1,101 +1,144 @@
-import Image from "next/image";
+"use client"
 
-export default function Home() {
+import { useState, useEffect } from "react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useChat } from "ai/react"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { AlertCircle } from "lucide-react"
+
+export default function InterviewPractice() {
+  const [topic, setTopic] = useState("")
+  const [promptTechnique, setPromptTechnique] = useState("few-shot")
+  const [techniqueDescription, setTechniqueDescription] = useState("")
+  const [apiKeySet, setApiKeySet] = useState(true)
+
+  const { messages, handleSubmit, isLoading } = useChat({
+    api: '/api/interview',
+  })
+
+
+  const getTechniqueDescription = (technique: string): string => {
+    switch (technique) {
+      case "few-shot":
+        return "Provides example questions to guide the AI in generating similar questions for your topic."
+      case "chain-of-thought":
+        return "Generates a series of questions that build upon each other, following a logical thought process."
+      case "zero-shot":
+        return "Creates diverse questions without any specific examples, covering various aspects of the topic."
+      case "role-playing":
+        return "Simulates a real interview experience with an AI interviewer asking questions on your chosen topic."
+      case "step-by-step":
+        return "Offers a comprehensive guide for interview preparation, including key concepts, resources, and practice questions."
+      default:
+        return ""
+    }
+  }
+
+  const updatePromptTechnique = (technique: string) => {
+    setPromptTechnique(technique)
+    setTechniqueDescription(getTechniqueDescription(technique))
+  }
+
+  useEffect(() => {
+    setTechniqueDescription(getTechniqueDescription(promptTechnique))
+
+    fetch("/api/check-api-key")
+      .then((res) => res.json())
+      .then((data) => setApiKeySet(data.apiKeySet))
+      .catch((err) => {
+        console.error("Error checking API key:", err)
+        setApiKeySet(false)
+      })
+  }, [promptTechnique])
+
+  const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    console.log("Submitting form with:", { topic, promptTechnique })
+    try {
+      await handleSubmit(e, {
+        data: { topic, promptTechnique }
+      })
+      console.log("Form submitted successfully")
+    } catch (error) {
+      console.error("Error submitting form:", error)
+    }
+  }
+
+  useEffect(() => {
+    if (messages.length > 0) {
+      console.log("Received message:", messages[messages.length - 1].content)
+    }
+  }, [messages])
+
+  if (!apiKeySet) {
+    return (
+      <Alert variant="destructive">
+        <AlertCircle className="h-4 w-4" />
+        <AlertTitle>Error</AlertTitle>
+        <AlertDescription>
+          The OpenAI API key is not set. Please set the OPENAI_API_KEY environment variable.
+        </AlertDescription>
+      </Alert>
+    )
+  }
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+    <div className="container mx-auto p-4">
+      <Card className="w-full max-w-2xl mx-auto">
+        <CardHeader>
+          <CardTitle>Interview Practice</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={onSubmit} className="space-y-4">
+            <div>
+              <label htmlFor="topic" className="block text-sm font-medium text-gray-700">
+                Interview Topic
+              </label>
+              <Input
+                id="topic"
+                value={topic}
+                onChange={(e) => setTopic(e.target.value)}
+                placeholder="e.g., React, Data Structures, System Design"
+                required
+              />
+            </div>
+            <div>
+              <label htmlFor="promptTechnique" className="block text-sm font-medium text-gray-700">
+                Prompt Technique
+              </label>
+              <Select value={promptTechnique} onValueChange={updatePromptTechnique}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a prompt technique" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="few-shot">Few-Shot Learning</SelectItem>
+                  <SelectItem value="chain-of-thought">Chain-of-Thought</SelectItem>
+                  <SelectItem value="zero-shot">Zero-Shot Prompting</SelectItem>
+                  <SelectItem value="role-playing">Role-Playing</SelectItem>
+                  <SelectItem value="step-by-step">Step-by-Step Guidance</SelectItem>
+                </SelectContent>
+              </Select>
+              {techniqueDescription && <p className="mt-2 text-sm text-gray-600">{techniqueDescription}</p>}
+            </div>
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? "Generating..." : "Generate Interview Practice"}
+            </Button>
+          </form>
+        </CardContent>
+        <CardFooter>
+          <Textarea
+            value={messages.length > 0 ? messages[messages.length - 1].content : ""}
+            readOnly
+            placeholder="Your interview practice will appear here..."
+            className="w-full h-64"
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+        </CardFooter>
+      </Card>
     </div>
-  );
+  )
 }
+
