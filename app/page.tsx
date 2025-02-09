@@ -11,22 +11,16 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { AlertCircle } from "lucide-react"
 
 export default function InterviewPractice() {
-  const [topic, setTopic] = useState("")
   const [promptTechnique, setPromptTechnique] = useState("few-shot")
   const [techniqueDescription, setTechniqueDescription] = useState("")
   const [apiKeySet, setApiKeySet] = useState(true)
 
-  const { messages, handleSubmit, isLoading, error } = useChat({
-    api: '/api/chat',
-    body: {
-      data: {
-        topic,
-        promptTechnique
-      }
-    }
+  const { messages, append, isLoading, input, handleInputChange, error } = useChat({
+    onError: error => {
+      console.error('An error occurred:', error);
+    },
   })
 
-  console.log({error});
 
   const getTechniqueDescription = (technique: string): string => {
     switch (technique) {
@@ -64,9 +58,13 @@ export default function InterviewPractice() {
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    console.log("Submitting form with:", { topic, promptTechnique })
+    console.log("Submitting form with:", { promptTechnique })
     try {
-      await handleSubmit(e)
+      // await handleSubmit(e)
+      await append({
+        role: 'user',
+        content: `Topic: ${input}`,
+      })
       console.log("Form submitted successfully")
     } catch (error) {
       console.error("Error submitting form:", error)
@@ -94,6 +92,15 @@ export default function InterviewPractice() {
   return (
     <div className="container mx-auto p-4">
       <Card className="w-full max-w-2xl mx-auto">
+          {error &&
+            (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Error</AlertTitle>
+                <code>{error instanceof Error ? error.message : JSON.stringify(error)}</code>
+              </Alert>
+            )
+          }
         <CardHeader>
           <CardTitle>Interview Practice</CardTitle>
         </CardHeader>
@@ -105,11 +112,12 @@ export default function InterviewPractice() {
               </label>
               <Input
                 id="topic"
-                value={topic}
-                onChange={(e) => setTopic(e.target.value)}
+                value={input}
+                onChange={handleInputChange}
                 placeholder="e.g., React, Data Structures, System Design"
                 required
               />
+            <p className="mt-2 text-sm text-gray-600">Not allowd keywords: harmfull, illegal</p>
             </div>
             <div>
               <label htmlFor="promptTechnique" className="block text-sm font-medium text-gray-700">

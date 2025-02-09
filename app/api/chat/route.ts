@@ -55,16 +55,21 @@ Provide a comprehensive guide following these steps for the given topic.`,
 
 export async function POST(req: Request) {
   console.log("API route called")
-  const body = await req.json()
-  const { topic, promptTechnique } = body.data || body
-  console.log("Received request:", { topic, promptTechnique })
+  const { messages } = await req.json();
+
+  const promptTechnique = "few-shot";
 
   // Security guard to prevent misuse
-  if (topic.toLowerCase().includes("harmful") || topic.toLowerCase().includes("illegal")) {
+  const harmfulKeywords = ["harmful", "illegal"];
+  const isHarmful = messages.some((message: { content: string }) =>
+    harmfulKeywords.some(keyword => message.content.toLowerCase().includes(keyword))
+  );
+
+  if (isHarmful) {
     return NextResponse.json(
       { error: "Invalid topic. Please choose an appropriate interview subject." },
       { status: 400 },
-    )
+    );
   }
 
   if (!process.env.OPENAI_API_KEY) {
@@ -76,7 +81,7 @@ export async function POST(req: Request) {
       model: "gpt-4",
       messages: [
         { role: "system", content: systemPrompts[promptTechnique as keyof typeof systemPrompts] },
-        { role: "user", content: `Topic: ${topic}` },
+        ...messages,
       ],
       temperature: 0.7,
       stream: true,
@@ -84,9 +89,9 @@ export async function POST(req: Request) {
 
     // Create a stream from the response
     if (!response.ok) {
-      const errorText = await response.text()
-      console.error('OpenAI API error:', errorText)
-      return new Response(errorText, { status: response.status })
+      const { error } = await response.json()
+      console.error("Error in API route:", error)
+      return NextResponse.json({ error: error.message || 'Something went wrong' }, { status: response.status })
     }
 
     const stream = OpenAIStream(response)
