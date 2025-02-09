@@ -55,7 +55,8 @@ Provide a comprehensive guide following these steps for the given topic.`,
 
 export async function POST(req: Request) {
   console.log("API route called")
-  const { topic, promptTechnique } = await req.json()
+  const body = await req.json()
+  const { topic, promptTechnique } = body.data || body
   console.log("Received request:", { topic, promptTechnique })
 
   // Security guard to prevent misuse

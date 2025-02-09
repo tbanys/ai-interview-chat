@@ -17,15 +17,12 @@ export default function InterviewPractice() {
   const [apiKeySet, setApiKeySet] = useState(true)
 
   const { messages, handleSubmit, isLoading, error } = useChat({
-    api: '/api/interview',
-    onResponse: (response) => {
-      console.log('Response received:', response)
-    },
-    onFinish: (message) => {
-      console.log('Chat finished:', message)
-    },
-    onError: (error) => {
-      console.error('Chat error:', error)
+    api: '/api/chat',
+    body: {
+      data: {
+        topic,
+        promptTechnique
+      }
     }
   })
 
@@ -69,9 +66,7 @@ export default function InterviewPractice() {
     e.preventDefault()
     console.log("Submitting form with:", { topic, promptTechnique })
     try {
-      await handleSubmit(e, {
-        data: { topic, promptTechnique }
-      })
+      await handleSubmit(e)
       console.log("Form submitted successfully")
     } catch (error) {
       console.error("Error submitting form:", error)
