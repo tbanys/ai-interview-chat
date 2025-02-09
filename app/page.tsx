@@ -19,6 +19,9 @@ export default function InterviewPractice() {
     onError: error => {
       console.error('An error occurred:', error);
     },
+    body: {
+      promptTechnique
+    }
   })
 
 

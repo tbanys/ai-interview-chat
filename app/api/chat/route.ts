@@ -55,9 +55,7 @@ Provide a comprehensive guide following these steps for the given topic.`,
 
 export async function POST(req: Request) {
   console.log("API route called")
-  const { messages } = await req.json();
-
-  const promptTechnique = "few-shot";
+  const { messages, promptTechnique = "few-shot" } = await req.json();
 
   // Security guard to prevent misuse
   const harmfulKeywords = ["harmful", "illegal"];
